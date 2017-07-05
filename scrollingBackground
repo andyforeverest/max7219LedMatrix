@@ -1,0 +1,44 @@
+const uint8_t clk = 7;
+const uint8_t cs = 6;
+const uint8_t din = 5;
+
+uint8_t pattern[6] = {0xcf, 0xc7, 0xe7, 0xe3, 0xf3, 0xc3};
+uint8_t screen[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+void setup() {
+  digitalWrite(cs, HIGH);
+  pinMode(7, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(5, OUTPUT);
+  initializare();
+}
+void output(byte address, byte data)
+{
+  digitalWrite(cs, LOW);
+  shiftOut(din, clk, MSBFIRST, address);
+  shiftOut(din, clk, MSBFIRST, data);
+  digitalWrite(cs, HIGH);
+}
+
+void initializare(){
+  output(0x0f, 0x00); //display test register - test mode off
+  output(0x0c, 0x01); //shutdown register - normal operation
+  output(0x0b, 0x07); //scan limit register - control all columns
+  output(0x0a, 0x00); //intensity register - min brightness = 0x00, max = 0x0f
+  output(0x09, 0x00); //no decoding
+}
+
+void drawScreen(uint8_t nextCol){
+  for(uint8_t i = 7; i>=1; i--){
+    screen[i] = screen[i-1];
+    output(i+1, screen[i]);
+  }//for
+  screen[0] = pattern[nextCol];
+  output(1, screen[0]); 
+  
+}
+  
+void loop() {
+  drawScreen(random(0, 6));
+  delay(500);
+}
